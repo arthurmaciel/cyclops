@@ -1,0 +1,8 @@
+Some development notes:
+
+- May need to add install, uninstall, and test sections to the package file
+- Need a way to sandbox, for example similar to the repo_dir option from chicken 5 chicken-install
+- Should first get everything working using a local unpacked copy of a package
+- Then figure out how to make it work remotely. Probably will want to zip everything up.
+- Big problem is how to handle external reps such as C libraries
+- Dep management is hard and may require a separate index. Let's do that later as part of the distributed solution. Initially dep will just be informational.
