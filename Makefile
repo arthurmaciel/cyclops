@@ -4,4 +4,4 @@ cyclops: cyclops.scm
 .PHONY: clean
 
 clean:
-	rm -rf cyclops *.c *.o cyclone/ *.meta
+	rm -rf cyclops *.c *.o bin/ cyclone/ *.meta

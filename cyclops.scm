@@ -9,7 +9,8 @@
 )
 
 ;; TODO: constants to later externalize
-(define *cyclone-repo-dir* ".") ;; TODO: temporarily use local for testing
+(define *cyclone-repo-bin-dir* "./bin") ;; TODO: temporarily use local for testing
+(define *cyclone-repo-lib-dir* ".") ;; TODO: temporarily use local for testing
 (define *pkg-file-dir* "../cyclone-packages/sample-lib")
 (define *pkg-file* "../cyclone-packages/sample-lib/package.scm")
 
@@ -83,31 +84,40 @@
           (set! install-file-list 
              (append 
                install-file-list 
-               (list 
-                file/path
-                (string-append file/path-no-ext ".o")
-                (string-append file/path-no-ext ".meta")
-               )))) ;; TODO: possibly any included .scm files, too
+               (map
+                 (lambda (file)
+                   (cons *cyclone-repo-lib-dir* file))
+                 (list 
+                  file/path
+                  (string-append file/path-no-ext ".o")
+                  (string-append file/path-no-ext ".meta")
+                 ))))) ;; TODO: possibly any included .scm files, too
         (else
           (set! install-file-list 
              (append 
                install-file-list 
                (list 
-                file/path-no-ext ;; compiled executable
+                (cons *cyclone-repo-bin-dir* file/path-no-ext) ;; compiled executable
                )))))
     ))
     (get-file-list params))
 
   ;; Install files
   ;(write `(files to install: ,install-file-list)) (newline) ;; more DEBUGGING
+  (if (not (file-exists? *cyclone-repo-bin-dir*))
+      (system (string-append "mkdir " *cyclone-repo-bin-dir*)))
+  (if (not (file-exists? *cyclone-repo-lib-dir*))
+      (system (string-append "mkdir " *cyclone-repo-lib-dir*)))
   (for-each
-    (lambda (filename)
+    (lambda (dest/filename)
       ; Strip off leading directory
-      (let* ((pkg-basedir-len (string-length *pkg-file-dir*))
+      (let* ((dest (car dest/filename))
+             (filename (cdr dest/filename))
+             (pkg-basedir-len (string-length *pkg-file-dir*))
              (fn-no-base (substring filename pkg-basedir-len (string-length filename))))
-        (create-missing-dirs fn-no-base *cyclone-repo-dir*)
+        (create-missing-dirs fn-no-base dest)
         (system
-          (string-append "cp " filename " " *cyclone-repo-dir* "/" fn-no-base))
+          (string-append "cp " filename " " dest "/" fn-no-base))
       ))
     install-file-list)
 
