@@ -98,8 +98,8 @@
     ))
     (get-file-list params))
 
-  ;; TODO: Install files
-(write `(files to install: ,install-file-list)) (newline) ;; more DEBUGGING
+  ;; Install files
+  ;(write `(files to install: ,install-file-list)) (newline) ;; more DEBUGGING
   (for-each
     (lambda (filename)
       ; Strip off leading directory
@@ -108,11 +108,7 @@
         (create-missing-dirs fn-no-base *cyclone-repo-dir*)
         (system
           (string-append "cp " filename " " *cyclone-repo-dir* "/" fn-no-base))
-      )
-
-      ;(system 
-      ;  (string-append "cp " filename " " *cyclone-repo-dir*))
-    )
+      ))
     install-file-list)
 
   ;; Run the 'install' section, if applicable 
