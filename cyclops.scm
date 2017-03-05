@@ -139,10 +139,10 @@
      (for-each
        (lambda (sub)
         (set! dir (string-append dir "/" sub))
-        (write `(checking ,dir))
-       )
-       path))
-)
+        (if (not (file-exists? dir))
+            (system 
+              (string-append "mkdir " dir))))
+       path)))
 
 #;(call-with-input-file 
   *pkg-file*
