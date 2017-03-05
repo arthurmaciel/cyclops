@@ -122,11 +122,36 @@
           (cdr install-directive))))
   )
 
+;; create-missing-dirs :: string -> string -> void
+;; Accept file with a path destination, and create any missing directories
+;; in the destination location.
+(define (create-missing-dirs file/path dest-path)
+  (let* (
+         (dir (string-copy dest-path))
+         (sub-dirs (split file/path #\/))
+         ;; Discard filename from full filename and path
+         (path (if (null? sub-dirs)
+                   sub-dirs
+                   (reverse
+                     (cdr
+                       (reverse sub-dirs)))))
+        )
+     (for-each
+       (lambda (sub)
+        (set! dir (string-append dir "/" sub))
+        (write `(checking ,dir))
+       )
+       path))
+)
+
 #;(call-with-input-file 
   *pkg-file*
   (lambda (fp)
     (read-pkg fp)
   ))
 
-(write
+#;(write
   (split "/scheme/cyclone/sample.sld" #\/))
+
+(write
+  (create-missing-dirs "scheme/cyclone/sample.sld" "."))
