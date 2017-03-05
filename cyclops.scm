@@ -105,7 +105,9 @@
       ; Strip off leading directory
       (let* ((pkg-basedir-len (string-length *pkg-file-dir*))
              (fn-no-base (substring filename pkg-basedir-len (string-length filename))))
-        (write `(DEBUG ,fn-no-base))
+        (create-missing-dirs fn-no-base *cyclone-repo-dir*)
+        (system
+          (string-append "cp " filename " " *cyclone-repo-dir* "/" fn-no-base))
       )
 
       ;(system 
@@ -144,7 +146,7 @@
               (string-append "mkdir " dir))))
        path)))
 
-#;(call-with-input-file 
+(call-with-input-file 
   *pkg-file*
   (lambda (fp)
     (read-pkg fp)
@@ -153,5 +155,5 @@
 #;(write
   (split "/scheme/cyclone/sample.sld" #\/))
 
-(write
+#;(write
   (create-missing-dirs "scheme/cyclone/sample.sld" "."))
