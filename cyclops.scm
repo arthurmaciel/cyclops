@@ -43,9 +43,15 @@
       (library? contents)))))
 
 ;; Read all of the parameters from the given package file port
-(define (read-pkg fp)
+(define (read-pkg fp cmd)
   (let ((params (read-all fp)))
-    (install params)))
+    (cond
+      ((eq? cmd 'install)
+       (install params))
+      ((eq? cmd 'uninstall)
+       (uninstall params))
+      (else
+       (error "Unsupported command" cmd)))))
 
 ;; Extract file list from the given package file parameters
 (define (get-file-list params)
@@ -63,6 +69,7 @@
                 (error "Unsupported filename" filename))))
           (cdr files)))))
 
+;; install :: alist -> void
 ;; Build & Install files using the given package file parameters
 (define (install params)
   (define install-file-list '())
@@ -130,6 +137,42 @@
           (cdr install-directive))))
   )
 
+(define (uninstall params)
+  (define file-list '())
+  ;; Build files
+  (for-each
+    (lambda (file)
+      (let* ((file/path (string-append *pkg-file-dir* "/" file))
+             (lib? (file-is-library? file/path))
+             (file/path-no-ext (basename file/path)))
+(write `(,file/path ,(file-is-library? file/path)))(newline) ;; DEBUG
+      ;; TODO: check return code, make sure build succeeded
+      ;; TODO: if library, install .o .sld .meta files
+      (cond
+        (lib?
+          (set! file-list 
+             (append 
+               file-list 
+               (map
+                 (lambda (file)
+                   (cons *cyclone-repo-lib-dir* file))
+                 (list 
+                  file/path
+                  (string-append file/path-no-ext ".o")
+                  (string-append file/path-no-ext ".meta")
+                 ))))) ;; TODO: possibly any included .scm files, too
+        (else
+          (set! install-file-list 
+             (append 
+               install-file-list 
+               (list 
+                (cons *cyclone-repo-bin-dir* file/path-no-ext) ;; compiled executable
+               )))))
+    ))
+    (get-file-list params))
+(write `(uninstall list ,file-list))
+)
+
 ;; create-missing-dirs :: string -> string -> void
 ;; Accept file with a path destination, and create any missing directories
 ;; in the destination location.
@@ -155,7 +198,8 @@
 (call-with-input-file 
   *pkg-file*
   (lambda (fp)
-    (read-pkg fp)
+    ;(read-pkg fp 'install)
+    (read-pkg fp 'uninstall)
   ))
 
 #;(write
