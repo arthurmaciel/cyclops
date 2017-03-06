@@ -14,6 +14,10 @@
 (define *pkg-file-dir* "../cyclone-packages/sample-lib")
 (define *pkg-file* "../cyclone-packages/sample-lib/package.scm")
 
+;; TODO: get cwd
+;; TODO: set cwd
+;; TODO: convenience function to do the set temporarily, then switch back
+
 ;; run-sys-cmd :: [string] -> integer
 ;; Concatenate given strings and run result as a system command
 (define (run-sys-cmd . strs)
@@ -25,10 +29,12 @@
 ;; and execute its directive if found.
 (define (run-directive params key)
   (let ((directive (assoc key params)))
-    (if directive
-        (for-each
-          run-sys-cmd
-          (cdr directive)))))
+    (cond
+     (directive
+;; TODO: Set the appropriate directory first
+      (for-each
+        run-sys-cmd
+        (cdr directive))))))
 
 ;; split :: string -> char -> [string]
 ;; Take the given string and split it into substrings separated by delim.
@@ -66,6 +72,8 @@
        (install params))
       ((eq? cmd 'uninstall)
        (uninstall params))
+      ((eq? cmd 'test)
+       (run-directive params cmd))
       (else
        (error "Unsupported command" cmd)))))
 
@@ -214,7 +222,8 @@
   *pkg-file*
   (lambda (fp)
     ;(read-pkg fp 'install)
-    (read-pkg fp 'uninstall)
+    ;(read-pkg fp 'uninstall)
+    (read-pkg fp 'test)
   ))
 
 #;(write
