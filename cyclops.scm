@@ -1,3 +1,13 @@
+;; Roadmap:
+;- get install, test, uninstall working locally
+;- modularize code, add a command line interface
+;- add a concept of a local repo "db" to keep track of:
+;  - installed packages
+;  - their versions
+;  - their package.scm file
+;- allow packing/unpacking a package
+;- add a distributed layer/tool to work with remote repos
+
 (import 
   (scheme base)
   (scheme read)
