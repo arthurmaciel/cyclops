@@ -139,15 +139,13 @@
 
 (define (uninstall params)
   (define file-list '())
-  ;; Build files
+  ;; Build up the list of installed files
   (for-each
     (lambda (file)
       (let* ((file/path (string-append *pkg-file-dir* "/" file))
              (lib? (file-is-library? file/path))
              (file/path-no-ext (basename file/path)))
-(write `(,file/path ,(file-is-library? file/path)))(newline) ;; DEBUG
-      ;; TODO: check return code, make sure build succeeded
-      ;; TODO: if library, install .o .sld .meta files
+    (write `(,file/path ,(file-is-library? file/path)))(newline) ;; DEBUG
       (cond
         (lib?
           (set! file-list 
@@ -162,15 +160,29 @@
                   (string-append file/path-no-ext ".meta")
                  ))))) ;; TODO: possibly any included .scm files, too
         (else
-          (set! install-file-list 
+          (set! file-list 
              (append 
-               install-file-list 
+               file-list 
                (list 
                 (cons *cyclone-repo-bin-dir* file/path-no-ext) ;; compiled executable
-               )))))
-    ))
+               )))))))
     (get-file-list params))
-(write `(uninstall list ,file-list))
+(write `(uninstall list ,file-list))(newline)
+;  ;; Uninstall each file in file-list
+  (for-each
+    (lambda (dest/filename)
+      ;; TODO: delete the installed files, leave dirs (at least for now)
+      (write `(TODO uninstall ,dest/filename))(newline)
+    )
+    file-list)
+
+  ;; Run the 'uninstall' section, if applicable 
+  (let ((uninstall-directive (assoc 'uninstall params)))
+    (if uninstall-directive
+        (for-each
+          (lambda (cmd)
+            (system cmd))
+          (cdr uninstall-directive))))
 )
 
 ;; create-missing-dirs :: string -> string -> void
