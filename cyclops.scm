@@ -7,6 +7,7 @@
   (scheme cyclone transforms)
   (scheme cyclone util)
 )
+(include-c-header "<unistd.h>")
 
 ;; TODO: constants to later externalize
 (define *cyclone-repo-bin-dir* "./bin") ;; TODO: temporarily use local for testing
@@ -17,6 +18,25 @@
 ;; TODO: get cwd
 ;; TODO: set cwd
 ;; TODO: convenience function to do the set temporarily, then switch back
+
+(define-c getcwd
+  "(void *data, int argc, closure _, object k)"
+  " char cwd[PATH_MAX];
+    if (getcwd(cwd, sizeof(cwd)) == NULL) {
+      Cyc_rt_raise_msg(data, \"Error calling get-cwd\");
+    } else {
+      make_string(str, cwd);
+      return_closcall1(data, k, &str);
+    }")
+
+(define-c chdir
+  "(void *data, int argc, closure _, object k, object path)"
+  " Cyc_check_str(data, path);
+    if (chdir(string_str(path)) < 0) {
+      Cyc_rt_raise_msg(data, \"Unable to change working directory\");
+    } else {
+      return_closcall1(data, k, obj_int2obj(0));
+    }")
 
 ;; run-sys-cmd :: [string] -> integer
 ;; Concatenate given strings and run result as a system command
@@ -218,6 +238,8 @@
             (run-sys-cmd "mkdir " dir)))
        path)))
 
+;(write (chdir *pkg-file-dir*))
+;(write (getcwd))
 (call-with-input-file 
   *pkg-file*
   (lambda (fp)
