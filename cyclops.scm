@@ -1,6 +1,8 @@
 ;; Roadmap:
 ;- consider, may be more flexible to have a build() target that puts everything in a sub-directory and overlays that to install, vs separate file/install/uninstall sections. look a PKGBUILD for an example: https://github.com/justinethier/cyclone-bootstrap/blob/master/dist/PKGBUILD
 ;  YES, will want to switch over to this. will be more work up front but should simplify things. can think through the design a bit before implementing anything
+;  will probably need a means of passing the destination dir as a variable to in the package.scm file's package section.
+;  may need to document the set of predefined variables
 ;
 ;- get install, test, uninstall working locally
 ;- modularize code, add a command line interface
