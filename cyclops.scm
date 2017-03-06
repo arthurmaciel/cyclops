@@ -14,11 +14,21 @@
 (define *pkg-file-dir* "../cyclone-packages/sample-lib")
 (define *pkg-file* "../cyclone-packages/sample-lib/package.scm")
 
-;; Concatenate given strings and run result as a system command
 ;; run-sys-cmd :: [string] -> integer
+;; Concatenate given strings and run result as a system command
 (define (run-sys-cmd . strs)
   (system
     (apply string-append strs)))
+
+;; run-directive :: alist -> symbol -> void
+;; Lookup given key in the alist of package parameters, 
+;; and execute its directive if found.
+(define (run-directive params key)
+  (let ((directive (assoc key params)))
+    (if directive
+        (for-each
+          run-sys-cmd
+          (cdr directive)))))
 
 ;; split :: string -> char -> [string]
 ;; Take the given string and split it into substrings separated by delim.
@@ -133,11 +143,7 @@
     install-file-list)
 
   ;; Run the 'install' section, if applicable 
-  (let ((install-directive (assoc 'install params)))
-    (if install-directive
-        (for-each
-          run-sys-cmd
-          (cdr install-directive))))
+  (run-directive params 'install)
   )
 
 (define (uninstall params)
@@ -180,11 +186,7 @@
     file-list)
 
   ;; Run the 'uninstall' section, if applicable 
-  (let ((uninstall-directive (assoc 'uninstall params)))
-    (if uninstall-directive
-        (for-each
-          run-sys-cmd
-          (cdr uninstall-directive))))
+  (run-directive params 'uninstall)
 )
 
 ;; create-missing-dirs :: string -> string -> void
