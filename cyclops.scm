@@ -14,6 +14,12 @@
 (define *pkg-file-dir* "../cyclone-packages/sample-lib")
 (define *pkg-file* "../cyclone-packages/sample-lib/package.scm")
 
+;; Concatenate given strings and run result as a system command
+;; run-sys-cmd :: [string] -> integer
+(define (run-sys-cmd . strs)
+  (system
+    (apply string-append strs)))
+
 ;; split :: string -> char -> [string]
 ;; Take the given string and split it into substrings separated by delim.
 ;; Delim must be a character and is not included in the substrings.
@@ -80,10 +86,9 @@
              (lib? (file-is-library? file/path))
              (file/path-no-ext (basename file/path)))
 (write `(,file/path ,(file-is-library? file/path)))(newline) ;; DEBUG
-        (system 
-          (string-append 
-            "cyclone " 
-            file/path))
+        (run-sys-cmd
+          "cyclone " 
+          file/path)
       ;; TODO: check return code, make sure build succeeded
       ;; TODO: if library, install .o .sld .meta files
       (cond
@@ -112,9 +117,9 @@
   ;; Install files
   ;(write `(files to install: ,install-file-list)) (newline) ;; more DEBUGGING
   (if (not (file-exists? *cyclone-repo-bin-dir*))
-      (system (string-append "mkdir " *cyclone-repo-bin-dir*)))
+      (run-sys-cmd "mkdir " *cyclone-repo-bin-dir*))
   (if (not (file-exists? *cyclone-repo-lib-dir*))
-      (system (string-append "mkdir " *cyclone-repo-lib-dir*)))
+      (run-sys-cmd "mkdir " *cyclone-repo-lib-dir*))
   (for-each
     (lambda (dest/filename)
       ; Strip off leading directory
@@ -123,8 +128,7 @@
              (pkg-basedir-len (string-length *pkg-file-dir*))
              (fn-no-base (substring filename pkg-basedir-len (string-length filename))))
         (create-missing-dirs fn-no-base dest)
-        (system
-          (string-append "cp " filename " " dest "/" fn-no-base))
+        (run-sys-cmd "cp " filename " " dest "/" fn-no-base)
       ))
     install-file-list)
 
@@ -132,8 +136,7 @@
   (let ((install-directive (assoc 'install params)))
     (if install-directive
         (for-each
-          (lambda (cmd)
-            (system cmd))
+          run-sys-cmd
           (cdr install-directive))))
   )
 
@@ -180,8 +183,7 @@
   (let ((uninstall-directive (assoc 'uninstall params)))
     (if uninstall-directive
         (for-each
-          (lambda (cmd)
-            (system cmd))
+          run-sys-cmd
           (cdr uninstall-directive))))
 )
 
@@ -203,8 +205,7 @@
        (lambda (sub)
         (set! dir (string-append dir "/" sub))
         (if (not (file-exists? dir))
-            (system 
-              (string-append "mkdir " dir))))
+            (run-sys-cmd "mkdir " dir)))
        path)))
 
 (call-with-input-file 
