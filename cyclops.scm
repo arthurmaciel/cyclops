@@ -15,9 +15,16 @@
 (define *pkg-file-dir* "../cyclone-packages/sample-lib")
 (define *pkg-file* "../cyclone-packages/sample-lib/package.scm")
 
-;; TODO: get cwd
-;; TODO: set cwd
-;; TODO: convenience function to do the set temporarily, then switch back
+;; with-chdir :: string -> function -> void
+;; Convenience function to temporarily change the current working dir
+(define (with-chdir path thunk)
+  (let ((cwd (getcwd)))
+    (chdir path)
+    (with-handler 
+      (lambda (err)
+        (write `(An error occurred ,err)))
+      (thunk))
+    (chdir cwd)))
 
 (define-c getcwd
   "(void *data, int argc, closure _, object k)"
@@ -51,10 +58,11 @@
   (let ((directive (assoc key params)))
     (cond
      (directive
-;; TODO: Set the appropriate directory first
-      (for-each
-        run-sys-cmd
-        (cdr directive))))))
+      ;; Set the appropriate directory first
+      (with-chdir *pkg-file-dir* (lambda ()
+        (for-each
+          run-sys-cmd
+          (cdr directive))))))))
 
 ;; split :: string -> char -> [string]
 ;; Take the given string and split it into substrings separated by delim.
@@ -244,8 +252,8 @@
   *pkg-file*
   (lambda (fp)
     ;(read-pkg fp 'install)
-    ;(read-pkg fp 'uninstall)
-    (read-pkg fp 'test)
+    (read-pkg fp 'uninstall)
+    ;(read-pkg fp 'test)
   ))
 
 #;(write
