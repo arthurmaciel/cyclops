@@ -5,8 +5,10 @@
 ;  - installed packages
 ;  - their versions
 ;  - their package.scm file
+;- add concept of upgrading using version info
 ;- allow packing/unpacking a package
 ;- add a distributed layer/tool to work with remote repos
+;- Add a dependency resolver to pull in deps when a package is installed/updated/removed
 
 (import 
   (scheme base)
