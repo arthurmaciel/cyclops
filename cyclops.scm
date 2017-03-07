@@ -27,8 +27,8 @@
 (include-c-header "<unistd.h>")
 
 ;; TODO: constants to later externalize
-(define *cyclone-repo-bin-dir* "./bin") ;; TODO: temporarily use local for testing
-(define *cyclone-repo-lib-dir* ".") ;; TODO: temporarily use local for testing
+(define *dest-dir* "/home/justin/Documents/cyclops") ;; TODO: temporarily use local for testing
+(define *lib-dir* "/usr/local/share/cyclone")
 (define *pkg-file-dir* "../cyclone-packages/sample-lib")
 (define *pkg-file* "../cyclone-packages/sample-lib/package.scm")
 
@@ -78,7 +78,11 @@
       ;; Set the appropriate directory first
       (with-chdir *pkg-file-dir* (lambda ()
         (for-each
-          run-sys-cmd
+          (lambda (cmd)
+            (run-sys-cmd 
+              (string-replace-all
+                (string-replace-all cmd "~DESTDIR~" *dest-dir*)
+                "~LIB~" *lib-dir*)))
           (cdr directive))))))))
 
 ;; split :: string -> char -> [string]
@@ -141,102 +145,103 @@
 ;; install :: alist -> void
 ;; Build & Install files using the given package file parameters
 (define (install params)
-  (define install-file-list '())
-  ;; Build files
-  (for-each
-    (lambda (file)
-      (let* ((file/path (string-append *pkg-file-dir* "/" file))
-             (lib? (file-is-library? file/path))
-             (file/path-no-ext (basename file/path)))
-(write `(,file/path ,(file-is-library? file/path)))(newline) ;; DEBUG
-        (run-sys-cmd
-          "cyclone " 
-          file/path)
-      ;; TODO: check return code, make sure build succeeded
-      ;; TODO: if library, install .o .sld .meta files
-      (cond
-        (lib?
-          (set! install-file-list 
-             (append 
-               install-file-list 
-               (map
-                 (lambda (file)
-                   (cons *cyclone-repo-lib-dir* file))
-                 (list 
-                  file/path
-                  (string-append file/path-no-ext ".o")
-                  (string-append file/path-no-ext ".meta")
-                 ))))) ;; TODO: possibly any included .scm files, too
-        (else
-          (set! install-file-list 
-             (append 
-               install-file-list 
-               (list 
-                (cons *cyclone-repo-bin-dir* file/path-no-ext) ;; compiled executable
-               )))))
-    ))
-    (get-file-list params))
+;  (define install-file-list '())
+;  ;; Build files
+;  (for-each
+;    (lambda (file)
+;      (let* ((file/path (string-append *pkg-file-dir* "/" file))
+;             (lib? (file-is-library? file/path))
+;             (file/path-no-ext (basename file/path)))
+;(write `(,file/path ,(file-is-library? file/path)))(newline) ;; DEBUG
+;        (run-sys-cmd
+;          "cyclone " 
+;          file/path)
+;      ;; TODO: check return code, make sure build succeeded
+;      ;; TODO: if library, install .o .sld .meta files
+;      (cond
+;        (lib?
+;          (set! install-file-list 
+;             (append 
+;               install-file-list 
+;               (map
+;                 (lambda (file)
+;                   (cons *cyclone-repo-lib-dir* file))
+;                 (list 
+;                  file/path
+;                  (string-append file/path-no-ext ".o")
+;                  (string-append file/path-no-ext ".meta")
+;                 ))))) ;; TODO: possibly any included .scm files, too
+;        (else
+;          (set! install-file-list 
+;             (append 
+;               install-file-list 
+;               (list 
+;                (cons *cyclone-repo-bin-dir* file/path-no-ext) ;; compiled executable
+;               )))))
+;    ))
+;    (get-file-list params))
+;
+;  ;; Install files
+;  ;(write `(files to install: ,install-file-list)) (newline) ;; more DEBUGGING
+;  (if (not (file-exists? *cyclone-repo-bin-dir*))
+;      (run-sys-cmd "mkdir " *cyclone-repo-bin-dir*))
+;  (if (not (file-exists? *cyclone-repo-lib-dir*))
+;      (run-sys-cmd "mkdir " *cyclone-repo-lib-dir*))
+;  (for-each
+;    (lambda (dest/filename)
+;      ; Strip off leading directory
+;      (let* ((dest (car dest/filename))
+;             (filename (cdr dest/filename))
+;             (pkg-basedir-len (string-length *pkg-file-dir*))
+;             (fn-no-base (substring filename pkg-basedir-len (string-length filename))))
+;        (create-missing-dirs fn-no-base dest)
+;        (run-sys-cmd "cp " filename " " dest "/" fn-no-base)
+;      ))
+;    install-file-list)
 
-  ;; Install files
-  ;(write `(files to install: ,install-file-list)) (newline) ;; more DEBUGGING
-  (if (not (file-exists? *cyclone-repo-bin-dir*))
-      (run-sys-cmd "mkdir " *cyclone-repo-bin-dir*))
-  (if (not (file-exists? *cyclone-repo-lib-dir*))
-      (run-sys-cmd "mkdir " *cyclone-repo-lib-dir*))
-  (for-each
-    (lambda (dest/filename)
-      ; Strip off leading directory
-      (let* ((dest (car dest/filename))
-             (filename (cdr dest/filename))
-             (pkg-basedir-len (string-length *pkg-file-dir*))
-             (fn-no-base (substring filename pkg-basedir-len (string-length filename))))
-        (create-missing-dirs fn-no-base dest)
-        (run-sys-cmd "cp " filename " " dest "/" fn-no-base)
-      ))
-    install-file-list)
-
+  (run-directive params 'build)
   ;; Run the 'install' section, if applicable 
   (run-directive params 'install)
   )
 
 (define (uninstall params)
-  (define file-list '())
-  ;; Build up the list of installed files
-  (for-each
-    (lambda (file)
-      (let* ((file/path (string-append *pkg-file-dir* "/" file))
-             (lib? (file-is-library? file/path))
-             (file/path-no-ext (basename file/path)))
-    (write `(,file/path ,(file-is-library? file/path)))(newline) ;; DEBUG
-      (cond
-        (lib?
-          (set! file-list 
-             (append 
-               file-list 
-               (map
-                 (lambda (file)
-                   (cons *cyclone-repo-lib-dir* file))
-                 (list 
-                  file/path
-                  (string-append file/path-no-ext ".o")
-                  (string-append file/path-no-ext ".meta")
-                 ))))) ;; TODO: possibly any included .scm files, too
-        (else
-          (set! file-list 
-             (append 
-               file-list 
-               (list 
-                (cons *cyclone-repo-bin-dir* file/path-no-ext) ;; compiled executable
-               )))))))
-    (get-file-list params))
-(write `(uninstall list ,file-list))(newline)
-;  ;; Uninstall each file in file-list
-  (for-each
-    (lambda (dest/filename)
-      ;; TODO: delete the installed files, leave dirs (at least for now)
-      (write `(TODO uninstall ,dest/filename))(newline)
-    )
-    file-list)
+;  (define file-list '())
+;  ;; Build up the list of installed files
+;  (for-each
+;    (lambda (file)
+;      (let* ((file/path (string-append *pkg-file-dir* "/" file))
+;             (lib? (file-is-library? file/path))
+;             (file/path-no-ext (basename file/path)))
+;    (write `(,file/path ,(file-is-library? file/path)))(newline) ;; DEBUG
+;      (cond
+;        (lib?
+;          (set! file-list 
+;             (append 
+;               file-list 
+;               (map
+;                 (lambda (file)
+;                   (cons *cyclone-repo-lib-dir* file))
+;                 (list 
+;                  file/path
+;                  (string-append file/path-no-ext ".o")
+;                  (string-append file/path-no-ext ".meta")
+;                 ))))) ;; TODO: possibly any included .scm files, too
+;        (else
+;          (set! file-list 
+;             (append 
+;               file-list 
+;               (list 
+;                (cons *cyclone-repo-bin-dir* file/path-no-ext) ;; compiled executable
+;               )))))))
+;    (get-file-list params))
+;(write `(uninstall list ,file-list))(newline)
+;;  ;; Uninstall each file in file-list
+;  (for-each
+;    (lambda (dest/filename)
+;      ;; TODO: delete the installed files, leave dirs (at least for now)
+;      (write `(TODO uninstall ,dest/filename))(newline)
+;    )
+;    file-list)
 
   ;; Run the 'uninstall' section, if applicable 
   (run-directive params 'uninstall)
@@ -268,8 +273,8 @@
 (call-with-input-file 
   *pkg-file*
   (lambda (fp)
-    ;(read-pkg fp 'install)
-    (read-pkg fp 'uninstall)
+    (read-pkg fp 'install)
+    ;(read-pkg fp 'uninstall)
     ;(read-pkg fp 'test)
   ))
 
