@@ -1,3 +1,5 @@
+;; TODO: create a cyclone library for command line arguments??
+
 ;; Roadmap:
 ;- get install, test, uninstall working locally
 ;- modularize code, add a command line interface
@@ -24,8 +26,6 @@
 ;; TODO: constants to later externalize
 (define *dest-dir* "/home/justin/Documents/cyclops") ;; TODO: temporarily use local for testing
 (define *lib-dir* "/usr/local/share/cyclone")
-(define *pkg-file-dir* "../cyclone-packages/sample-lib")
-(define *pkg-file* "../cyclone-packages/sample-lib/package.scm")
 
 ;; with-chdir :: string -> function -> void
 ;; Convenience function to temporarily change the current working dir
@@ -63,15 +63,16 @@
   (system
     (apply string-append strs)))
 
-;; run-directive :: alist -> symbol -> void
+;; run-directive :: string -> alist -> symbol -> void
 ;; Lookup given key in the alist of package parameters, 
 ;; and execute its directive if found.
-(define (run-directive params key)
+(define (run-directive pkg-file-dir params key)
   (let ((directive (assoc key params)))
     (cond
      (directive
       ;; Set the appropriate directory first
-      (with-chdir *pkg-file-dir* (lambda ()
+      (write pkg-file-dir)
+      (with-chdir pkg-file-dir (lambda ()
         (for-each
           (lambda (cmd)
             (run-sys-cmd 
@@ -109,16 +110,16 @@
       (library? contents)))))
 
 ;; Read all of the parameters from the given package file port
-(define (read-pkg fp cmd)
+(define (read-pkg fp cmd pkg-file-dir)
   (let ((params (read-all fp)))
     (cond
       ((equal? cmd "install")
-       (run-directive params 'build)
-       (run-directive params 'install))
+       (run-directive pkg-file-dir params 'build)
+       (run-directive pkg-file-dir params 'install))
       ((equal? cmd "uninstall")
-       (run-directive params 'uninstall))
+       (run-directive pkg-file-dir params 'uninstall))
       ((equal? cmd "test")
-       (run-directive params cmd))
+       (run-directive pkg-file-dir params 'test))
       (else
        (error "Unsupported command" cmd)))))
 
@@ -137,6 +138,29 @@
               (else
                 (error "Unsupported filename" filename))))
           (cdr files)))))
+
+;; TODO: almost there, but need to join dirs back up
+;; maybe fold over them, but need to test edge cases
+
+(define (join lis delim) ;; TODO: weird this takes string delim and split takes char, clean up
+  (foldl 
+    (lambda (str accum)
+      (string-append 
+        accum 
+        str
+        delim 
+        ))
+    ""
+    lis))
+(define (filename->path filename)
+   (let* ((sub-dirs (split filename #\/))
+          ;; Discard filename from full filename and path
+          (path (if (null? sub-dirs)
+                    sub-dirs
+                    (reverse
+                      (cdr
+                        (reverse sub-dirs))))))
+    (join path "/")))
 
 ;; create-missing-dirs :: string -> string -> void
 ;; Accept file with a path destination, and create any missing directories
@@ -164,33 +188,14 @@
   (cond
     ((or (null? args)
          (< (length args) 2))
-     (write "TODO: usage")
+     (write "Usage: cyclone command package-file")
      (newline)
      (exit 1))
     (else
       (let ((cmd (car args))
             (pkgfile (cadr args)))
-        (write `(pkg dir ,(basename pkgfile)))
+(write `(pkg dir ,(filename->path pkgfile)))
         (call-with-input-file
           pkgfile
           (lambda (fp)
-            (read-pkg fp cmd))))
-      )))
-;; TODO: create a cyclone library for command line arguments??
-
-
-;(write (chdir *pkg-file-dir*))
-;(write (getcwd))
-;(call-with-input-file 
-;  *pkg-file*
-;  (lambda (fp)
-;    ;(read-pkg fp 'install)
-;    (read-pkg fp 'uninstall)
-;    ;(read-pkg fp 'test)
-;  ))
-;
-;#;(write
-;  (split "/scheme/cyclone/sample.sld" #\/))
-;
-;#;(write
-;  (create-missing-dirs "scheme/cyclone/sample.sld" "."))
+            (read-pkg fp cmd (filename->path pkgfile))))))))
