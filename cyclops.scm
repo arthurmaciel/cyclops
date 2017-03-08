@@ -1,7 +1,6 @@
 ;; TODO: create a cyclone library for command line arguments??
 
 ;; Roadmap:
-;- get install, test, uninstall working locally
 ;- modularize code, add a command line interface
 ;- add a concept of a local repo "db" to keep track of:
 ;  - installed packages
@@ -71,7 +70,6 @@
     (cond
      (directive
       ;; Set the appropriate directory first
-      (write pkg-file-dir)
       (with-chdir pkg-file-dir (lambda ()
         (for-each
           (lambda (cmd)
@@ -194,7 +192,6 @@
     (else
       (let ((cmd (car args))
             (pkgfile (cadr args)))
-(write `(pkg dir ,(filename->path pkgfile)))
         (call-with-input-file
           pkgfile
           (lambda (fp)
