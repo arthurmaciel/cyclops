@@ -1,4 +1,6 @@
 ;; TODO: create a cyclone library for command line arguments??
+;; TODO: split and join should be in core as well, in some form
+;;       generalize them to functions on lists, then provide string-splilt, string-join
 
 ;; Roadmap:
 ;- modularize code, add a command line interface
