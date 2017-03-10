@@ -8,6 +8,7 @@
   (export
     split
     join 
+    filename->file
     filename->path
     run-sys-cmd
     create-missing-dirs
@@ -62,6 +63,16 @@
                       (cdr
                         (reverse sub-dirs))))))
     (join path #\/)))
+
+;; filename->file :: string -> string
+;; Take the given filename and take just the "file" portion with no path.
+;; EG: "./pkg/sample/package.scm" => "package.scm"
+(define (filename->file filename)
+   (let* ((sub-dirs (split filename #\/)))
+     (if (null? sub-dirs)
+         sub-dirs
+         (car
+           (reverse sub-dirs)))))
 
 ;; with-chdir :: string -> function -> void
 ;; Convenience function to temporarily change the current working dir

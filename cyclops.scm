@@ -1,9 +1,4 @@
-;; TODO: create a cyclone library for command line arguments??
-;; TODO: split and join should be in core as well, in some form
-;;       generalize them to functions on lists, then provide string-splilt, string-join
-
 ;; Roadmap:
-;- modularize code, add a command line interface
 
 ; changes to server "cyclone-packages":
 ; - on the packages side, could maintain a package index that might just be a zipped list of all the package.scm files on the server
@@ -28,12 +23,15 @@
   (scheme read)
   (scheme write)
   (scheme file)
+  (scheme cyclone util)
   (util)
 )
 
 ;; TODO: constants to later externalize
 (define *dest-dir* "/home/justin/Documents/cyclops") ;; TODO: temporarily use local for testing
 (define *lib-dir* "/usr/local/share/cyclone")
+(define *cyclops-db:installed-dir* "./installed")
+(define *cyclops-db:repo-sync-dir* "./remote")
 
 ;; run-directive :: string -> alist -> symbol -> void
 ;; Lookup given key in the alist of package parameters, 
@@ -58,17 +56,47 @@
     (let ((contents (read fp)))
       (library? contents)))))
 
+(define (pkg-file-dir->pkg-name pkg-file-dir)
+  (car (reverse (split pkg-file-dir #\/))))
+
 ;; Read all of the parameters from the given package file port
-(define (read-pkg fp cmd pkg-file-dir)
-  (let ((params (read-all fp)))
+(define (process-pkg cmd pkgfile)
+  (let* ((params (call-with-input-file
+                   pkgfile
+                   (lambda (fp) 
+                     (read-all fp))))
+         (pkg-file-dir
+           (filename->path pkgfile))
+         (cp:pkg-file-dir
+           (string-append
+             *cyclops-db:installed-dir*
+             "/"
+             (pkg-file-dir->pkg-name pkg-file-dir))))
     (cond
       ((equal? cmd "install")
        (run-directive pkg-file-dir params 'build)
-       (run-directive pkg-file-dir params 'install))
+       (run-directive pkg-file-dir params 'install)
+       ;; Record installed package in local DB
+       ;; This format is not good enough, but rather just a start
+       (run-sys-cmd 
+         "mkdir -p "
+         cp:pkg-file-dir)
+       (run-sys-cmd
+         "cp "
+         pkgfile
+         " "
+         cp:pkg-file-dir
+         "/"
+         (filename->file pkgfile))
+      )
       ((equal? cmd "uninstall")
        (run-directive pkg-file-dir params 'uninstall))
       ((equal? cmd "test")
        (run-directive pkg-file-dir params 'test))
+      ((equal? cmd "sync")
+       (write "TODO: download latest repo from remote")
+;;(define *cyclops-db:repo-sync-dir* "./remote")
+      )
       (else
        (error "Unsupported command" cmd)))))
 
@@ -100,7 +128,4 @@
     (else
       (let ((cmd (car args))
             (pkgfile (cadr args)))
-        (call-with-input-file
-          pkgfile
-          (lambda (fp)
-            (read-pkg fp cmd (filename->path pkgfile))))))))
+        (process-pkg cmd pkgfile)))))
