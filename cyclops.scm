@@ -10,16 +10,17 @@
 ; - to sync up, a cyclops client could just download the latest index file.
 ; - need a script to build up an index file, and possibly to create packages (basically just tar/gzip each package directory)
 
-
 ;- add a concept of a local repo "db" to keep track of:
 ;  - installed packages
 ;    - their versions
 ;    - their package.scm file (possibly)
 ;  - latest synced "index" file from the server
-;
+
+;- add a distributed layer/tool to work with remote repos
+;  - could use libcurl to download files: https://curl.haxx.se/libcurl/c/url2file.html
+
 ;- add concept of upgrading using version info
 ;- allow packing/unpacking a package
-;- add a distributed layer/tool to work with remote repos
 ;- Add a dependency resolver to pull in deps when a package is installed/updated/removed
 
 (import 
