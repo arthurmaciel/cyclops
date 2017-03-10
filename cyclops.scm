@@ -49,6 +49,7 @@
       (thunk))
     (chdir cwd)))
 
+;; Get current working directory
 (define-c getcwd
   "(void *data, int argc, closure _, object k)"
   " char cwd[PATH_MAX];
@@ -59,6 +60,7 @@
       return_closcall1(data, k, &str);
     }")
 
+;; Change current working directory
 (define-c chdir
   "(void *data, int argc, closure _, object k, object path)"
   " Cyc_check_str(data, path);
@@ -152,16 +154,21 @@
 ;; TODO: almost there, but need to join dirs back up
 ;; maybe fold over them, but need to test edge cases
 
-(define (join lis delim) ;; TODO: weird this takes string delim and split takes char, clean up
-  (foldl 
-    (lambda (str accum)
-      (string-append 
-        accum 
-        str
-        delim 
-        ))
-    ""
-    lis))
+;; join :: [string] -> char -> string
+(define (join lis delim)
+  (let ((delim-str (list->string (list delim))))
+    (foldl 
+      (lambda (str accum)
+        (string-append 
+          accum 
+          str
+          delim-str))
+      ""
+      lis)))
+
+;; filename->path :: string -> string
+;; Take the given filename and take just the "path" portion.
+;; EG: "./pkg/sample/package.scm" => "./pkg/sample/"
 (define (filename->path filename)
    (let* ((sub-dirs (split filename #\/))
           ;; Discard filename from full filename and path
@@ -170,7 +177,7 @@
                     (reverse
                       (cdr
                         (reverse sub-dirs))))))
-    (join path "/")))
+    (join path #\/)))
 
 ;; create-missing-dirs :: string -> string -> void
 ;; Accept file with a path destination, and create any missing directories
