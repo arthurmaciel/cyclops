@@ -24,6 +24,7 @@
   (scheme write)
   (scheme file)
   (scheme cyclone util)
+  (srfi 2)
   (download)
   (util)
 )
@@ -128,7 +129,8 @@
         (call-with-input-file
           index-file
           (lambda (fp)
-            (let ((entry (assoc (string->symbol name) (read-all fp))))
+            (and-let* ((index (read-all fp))
+                       (entry (assoc (string->symbol name) index)))
               `((name . ,(car entry))
                 (ver  . ,(cadr entry))
                 (file . ,(caddr entry))))))))))
@@ -148,6 +150,18 @@
        (string-append *remote-repo-url* "index.dat")
        (string-append *cyclops-db:dir* "/index.dat")))
 ;; TODO: need a query command to query for installed packages
+    ((equal? cmd "query")
+     (let* ((package-name (cadr args))
+            (package-info (local-db:get package-name)))
+       (cond
+         ((not package-info)
+          ;; TODO: how to handle this case?
+          (display "Package not found!"))
+         (else
+          (display (cdr (assoc 'name package-info)))
+          (display "-")
+          (display (cdr (assoc 'ver package-info)))
+          (newline)))))
 ;; TODO: following need to work with the package name rather than the
 ;; package file.
 ;; - for install, need to download the remote file (though may want to check
