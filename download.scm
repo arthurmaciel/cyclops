@@ -2,6 +2,7 @@
   (scheme base)
   (scheme write)
 )
+(include-c-header "download-header.h")
 (include-c-header "<curl/curl.h>")
 
 (define-c download
@@ -47,16 +48,5 @@
 
   return_closcall1(data, k, boolean_t);
     ")
-
-;; TODO: this is a total hack, need another way to define a raw c function
-(define-c dummy
-  "(void *data, int argc, closure _, object k)"
-  " }
-
-static size_t write_data(void *ptr, size_t size, size_t nmemb, void *stream)
-{
-  size_t written = fwrite(ptr, size, nmemb, (FILE *)stream);
-  return written;
-  ");
 
 (write 'done)
