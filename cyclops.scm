@@ -95,13 +95,6 @@
        (run-directive pkg-file-dir params 'uninstall))
       ((equal? cmd "test")
        (run-directive pkg-file-dir params 'test))
-      ((equal? cmd "sync")
-       (run-sys-cmd
-         "mkdir -p " *cyclops-db:repo-sync-dir*)
-       (download 
-         (string-append *remote-repo-url* "index.dat")
-         (string-append *cyclops-db:repo-sync-dir* "/index.dat"))
-      )
       (else
        (error "Unsupported command" cmd)))))
 
@@ -121,16 +114,27 @@
                 (error "Unsupported filename" filename))))
           (cdr files)))))
 
+(define (usage)
+  (display "Usage: cyclone command package-file")
+  (newline))
+
 ;; Main 
 (let* ((args (command-line-arguments))
-      )
+       (cmd (if (null? args) #f (car args))))
   (cond
-    ((or (null? args)
-         (< (length args) 2))
-     (write "Usage: cyclone command package-file")
+    ((null? args)
+     (usage))
+    ((equal? cmd "sync")
+     (display "Downloading remote repository index...")
      (newline)
-     (exit 1))
-    (else
+     (run-sys-cmd
+       "mkdir -p " *cyclops-db:repo-sync-dir*)
+     (download 
+       (string-append *remote-repo-url* "index.dat")
+       (string-append *cyclops-db:repo-sync-dir* "/index.dat")))
+    ((member cmd '("install" "uninstall" "test"))
       (let ((cmd (car args))
             (pkgfile (cadr args)))
-        (process-pkg cmd pkgfile)))))
+        (process-pkg cmd pkgfile)))
+    (else
+     (usage))))
