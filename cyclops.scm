@@ -1,22 +1,12 @@
 ;; Roadmap:
-
-; changes to server "cyclone-packages":
-; - on the packages side, could maintain a package index that might just be a zipped list of all the package.scm files on the server
-; - to sync up, a cyclops client could just download the latest index file.
-; - need a script to build up an index file, and possibly to create packages (basically just tar/gzip each package directory)
-
-;- add a concept of a local repo "db" to keep track of:
-;  - installed packages
-;    - their versions
-;    - their package.scm file (possibly)
-;  - latest synced "index" file from the server
-
-;- add a distributed layer/tool to work with remote repos
-;  - could use libcurl to download files: https://curl.haxx.se/libcurl/c/url2file.html
-
-;- add concept of upgrading using version info
-;- allow packing/unpacking a package
-;- Add a dependency resolver to pull in deps when a package is installed/updated/removed
+; 
+; - Need to include deps, maybe everything from package.scm in index.dat
+; - Upgrade is just like install but with a version check prior. And possibly an uninstall as well (prior to install???)
+; - Need to fix up paths in packages and cyclops . For now will model everything after the cyclone makefile.
+; - Need to get a working uninstall directive in the sample lib
+; - Will need to update cyclone to recognize (cyclone) libs as coming from the data directory
+; - Need to move all of the cyclops globals to a confit file. Allow specifying config file location somehow as well, to better support sandboxes
+; - Consider adding a define-c to get a temporary file name instead of using /tmp
 
 (import 
   (scheme base)
