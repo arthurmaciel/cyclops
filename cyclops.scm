@@ -88,7 +88,11 @@
          (filename->file pkgfile))
       )
       ((equal? cmd "uninstall-local")
-       (run-directive pkg-file-dir params 'uninstall))
+       (run-directive pkg-file-dir params 'uninstall)
+       ;; Remove package from local DB
+       (run-sys-cmd
+         "rm -rf " cp:pkg-file-dir)
+      )
       ((equal? cmd "test")
        (run-directive pkg-file-dir params 'test))
       (else
@@ -204,9 +208,6 @@ Commands:
          (string-append 
            *local-repo-dir*
            "/" package-name "/package.scm")))
-     ;; TODO: look up package in local repo, call uninstall section from package.scm (probably via uninstall-local)
-     ;; TODO: probably do something similar for test
-     ;(write 'TODO)
     )
     ((member cmd '("install-local" "uninstall-local" "test"))
       (let ((cmd (car args))
