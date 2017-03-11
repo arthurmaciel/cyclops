@@ -132,6 +132,18 @@
      (download 
        (string-append *remote-repo-url* "index.dat")
        (string-append *cyclops-db:repo-sync-dir* "/index.dat")))
+;; TODO: need a query command to query for installed packages
+;; TODO: following need to work with the package name rather than the
+;; package file.
+;; - for install, need to download the remote file (though may want to check
+;;   local package.scm and version from index.dat), then when
+;;   that file is available do the current install using the download.
+;;   once everything is done need to save the package.scm in the appropriate
+;;   place and make any other needed local DB entries
+;; - function is: uninstall/test, look up downloaded package file (?) and exec
+;;   commands if necessary. probably only want to save the package.scm file
+;;   though, which may change how tests are run. or maybe the test dir is
+;;   also saved
     ((member cmd '("install" "uninstall" "test"))
       (let ((cmd (car args))
             (pkgfile (cadr args)))
