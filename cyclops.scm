@@ -75,7 +75,7 @@
              "/"
              (pkg-file-dir->pkg-name pkg-file-dir))))
     (cond
-      ((equal? cmd "install")
+      ((equal? cmd "install-local")
        (run-directive pkg-file-dir params 'build)
        (run-directive pkg-file-dir params 'install)
        ;; Record installed package in local DB
@@ -91,7 +91,7 @@
          "/"
          (filename->file pkgfile))
       )
-      ((equal? cmd "uninstall")
+      ((equal? cmd "uninstall-local")
        (run-directive pkg-file-dir params 'uninstall))
       ((equal? cmd "test")
        (run-directive pkg-file-dir params 'test))
@@ -144,7 +144,17 @@
 ;;   commands if necessary. probably only want to save the package.scm file
 ;;   though, which may change how tests are run. or maybe the test dir is
 ;;   also saved
-    ((member cmd '("install" "uninstall" "test"))
+    ((equal? cmd "install")
+     ;; TODO: check if a sync is needed (IE, there is no local DB)
+     (let ((package-name (cadr args)))
+       ;; TODO: check for package in local DB?
+       ;; TODO: check if package is already installed?
+       ;; TODO: build package name to download using local DB
+       ;;       url will be REMOTE/NAME-VERSION.tar.gz
+       ;; TODO: after download, unpackage and use install-local to complete installation
+       ;; TODO: after install, add an entry to the local DB
+    ))
+    ((member cmd '("install-local" "uninstall-local" "test"))
       (let ((cmd (car args))
             (pkgfile (cadr args)))
         (process-pkg cmd pkgfile)))
