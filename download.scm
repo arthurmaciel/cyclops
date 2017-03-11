@@ -6,12 +6,13 @@
 (include-c-header "<curl/curl.h>")
 
 (define-c download
-  "(void *data, int argc, closure _, object k, object url)"
+  "(void *data, int argc, closure _, object k, object url, object filename)"
   " 
   CURL *curl_handle;
-  static const char *pagefilename = \"page.out\";
   FILE *pagefile;
 
+  Cyc_check_str(data, url);
+  Cyc_check_str(data, filename);
   curl_global_init(CURL_GLOBAL_ALL);
 
   /* init the curl session */
@@ -30,7 +31,7 @@
   curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, write_data);
 
   /* open the file */
-  pagefile = fopen(pagefilename, \"wb\");
+  pagefile = fopen(string_str(filename), \"wb\");
   if(pagefile) {
 
     /* write the page body to this file handle */
@@ -49,4 +50,6 @@
   return_closcall1(data, k, boolean_t);
     ")
 
-(write 'done)
+(download 
+  (car (command-line-arguments))
+  (cadr (command-line-arguments)))
