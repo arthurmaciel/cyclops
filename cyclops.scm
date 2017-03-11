@@ -24,6 +24,7 @@
   (scheme write)
   (scheme file)
   (scheme cyclone util)
+  (download)
   (util)
 )
 

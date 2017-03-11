@@ -1,9 +1,14 @@
-(import
-  (scheme base)
-  (scheme write)
-)
-(include-c-header "download-header.h")
-(include-c-header "<curl/curl.h>")
+(define-library (download)
+  (import 
+    (scheme base)
+    (scheme write))
+  (include-c-header "download-header.h")
+  (include-c-header "<curl/curl.h>")
+  (export
+    download)
+  (begin
+
+(define tmp 1) ;; TODO: cyclone bug that this is required
 
 (define-c download
   "(void *data, int argc, closure _, object k, object url, object filename)"
@@ -50,6 +55,4 @@
   return_closcall1(data, k, boolean_t);
     ")
 
-(download 
-  (car (command-line-arguments))
-  (cadr (command-line-arguments)))
+))
