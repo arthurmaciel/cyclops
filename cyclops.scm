@@ -33,6 +33,7 @@
 (define *lib-dir* "/usr/local/share/cyclone")
 (define *cyclops-db:installed-dir* "./installed")
 (define *cyclops-db:repo-sync-dir* "./remote")
+(define *remote-repo-url* "https://raw.githubusercontent.com/cyclone-scheme/cyclone-packages/master/_packages/")
 
 ;; run-directive :: string -> alist -> symbol -> void
 ;; Lookup given key in the alist of package parameters, 
@@ -95,8 +96,11 @@
       ((equal? cmd "test")
        (run-directive pkg-file-dir params 'test))
       ((equal? cmd "sync")
-       (write "TODO: download latest repo from remote")
-;;(define *cyclops-db:repo-sync-dir* "./remote")
+       (run-sys-cmd
+         "mkdir -p " *cyclops-db:repo-sync-dir*)
+       (download 
+         (string-append *remote-repo-url* "index.dat")
+         (string-append *cyclops-db:repo-sync-dir* "/index.dat"))
       )
       (else
        (error "Unsupported command" cmd)))))
