@@ -30,11 +30,11 @@
 )
 
 ;; TODO: constants to later externalize
+(define *tmp-dir* "/tmp")
 (define *dest-dir* "/home/justin/Documents/cyclops") ;; TODO: temporarily use local for testing
 (define *lib-dir* "/usr/local/share/cyclone")
-(define *cyclops-db:dir* "./repo")
+(define *local-repo-dir* "./repo")
 (define *remote-repo-url* "https://raw.githubusercontent.com/cyclone-scheme/cyclone-packages/master/_packages/")
-(define *tmp-dir* "/tmp")
 
 ;; run-directive :: string -> alist -> symbol -> void
 ;; Lookup given key in the alist of package parameters, 
@@ -72,7 +72,7 @@
            (filename->path pkgfile))
          (cp:pkg-file-dir
            (string-append
-             *cyclops-db:dir*
+             *local-repo-dir*
              "/"
              (pkg-file-dir->pkg-name pkg-file-dir))))
     ;(display `(debug ,pkg-file-dir ,params))
@@ -117,11 +117,21 @@
           (cdr files)))))
 
 (define (usage)
-  (display "Usage: cyclone command package-file")
+  (display "Usage: cyclops install package
+       cyclops query package
+       cyclops sync
+
+cyclops is a simple package manager that supports the Cyclone Scheme compiler.
+
+Commands:
+  install - Fetch, build, and install a package from the remote repository
+  query - Determine if the given package is installed
+  sync - Download the latest package index from the remote repository
+")
   (newline))
 
 (define (local-db:get name)
-  (let ((index-file (string-append *cyclops-db:dir* "/index.dat")))
+  (let ((index-file (string-append *local-repo-dir* "/index.dat")))
     (cond
       ((not (file-exists? index-file))
        #f)
@@ -145,10 +155,10 @@
      (display "Downloading remote repository index...")
      (newline)
      (run-sys-cmd
-       "mkdir -p " *cyclops-db:dir*)
+       "mkdir -p " *local-repo-dir*)
      (download 
        (string-append *remote-repo-url* "index.dat")
-       (string-append *cyclops-db:dir* "/index.dat")))
+       (string-append *local-repo-dir* "/index.dat")))
 ;; TODO: need a query command to query for installed packages
     ((equal? cmd "query")
      (let* ((package-name (cadr args))
@@ -198,7 +208,7 @@
        (process-pkg 
          "uninstall-local" 
          (string-append 
-           *cyclops-db:dir*
+           *local-repo-dir*
            "/" package-name "/package.scm")))
      ;; TODO: look up package in local repo, call uninstall section from package.scm (probably via uninstall-local)
      ;; TODO: probably do something similar for test
