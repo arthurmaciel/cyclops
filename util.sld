@@ -61,8 +61,11 @@
                     sub-dirs
                     (reverse
                       (cdr
-                        (reverse sub-dirs))))))
-    (join path #\/)))
+                        (reverse sub-dirs)))))
+          (result (join path #\/)))
+     (if (eq? #\/ (string-ref filename 0))
+       (string-append "/" result)
+       result)))
 
 ;; filename->file :: string -> string
 ;; Take the given filename and take just the "file" portion with no path.
@@ -101,7 +104,7 @@
   "(void *data, int argc, closure _, object k, object path)"
   " Cyc_check_str(data, path);
     if (chdir(string_str(path)) < 0) {
-      Cyc_rt_raise_msg(data, \"Unable to change working directory\");
+      Cyc_rt_raise2(data, \"Unable to change working directory\", path);
     } else {
       return_closcall1(data, k, obj_int2obj(0));
     }")

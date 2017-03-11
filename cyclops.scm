@@ -31,9 +31,9 @@
 ;; TODO: constants to later externalize
 (define *dest-dir* "/home/justin/Documents/cyclops") ;; TODO: temporarily use local for testing
 (define *lib-dir* "/usr/local/share/cyclone")
-(define *cyclops-db:installed-dir* "./installed")
-(define *cyclops-db:repo-sync-dir* "./remote")
+(define *cyclops-db:dir* "./repo")
 (define *remote-repo-url* "https://raw.githubusercontent.com/cyclone-scheme/cyclone-packages/master/_packages/")
+(define *tmp-dir* "/tmp")
 
 ;; run-directive :: string -> alist -> symbol -> void
 ;; Lookup given key in the alist of package parameters, 
@@ -71,9 +71,10 @@
            (filename->path pkgfile))
          (cp:pkg-file-dir
            (string-append
-             *cyclops-db:installed-dir*
+             *cyclops-db:dir*
              "/"
              (pkg-file-dir->pkg-name pkg-file-dir))))
+    ;(display `(debug ,pkg-file-dir ,params))
     (cond
       ((equal? cmd "install-local")
        (run-directive pkg-file-dir params 'build)
@@ -118,6 +119,20 @@
   (display "Usage: cyclone command package-file")
   (newline))
 
+(define (local-db:get name)
+  (let ((index-file (string-append *cyclops-db:dir* "/index.dat")))
+    (cond
+      ((not (file-exists? index-file))
+       #f)
+      (else
+        (call-with-input-file
+          index-file
+          (lambda (fp)
+            (let ((entry (assoc (string->symbol name) (read-all fp))))
+              `((name . ,(car entry))
+                (ver  . ,(cadr entry))
+                (file . ,(caddr entry))))))))))
+
 ;; Main 
 (let* ((args (command-line-arguments))
        (cmd (if (null? args) #f (car args))))
@@ -128,10 +143,10 @@
      (display "Downloading remote repository index...")
      (newline)
      (run-sys-cmd
-       "mkdir -p " *cyclops-db:repo-sync-dir*)
+       "mkdir -p " *cyclops-db:dir*)
      (download 
        (string-append *remote-repo-url* "index.dat")
-       (string-append *cyclops-db:repo-sync-dir* "/index.dat")))
+       (string-append *cyclops-db:dir* "/index.dat")))
 ;; TODO: need a query command to query for installed packages
 ;; TODO: following need to work with the package name rather than the
 ;; package file.
@@ -146,14 +161,35 @@
 ;;   also saved
     ((equal? cmd "install")
      ;; TODO: check if a sync is needed (IE, there is no local DB)
-     (let ((package-name (cadr args)))
-       ;; TODO: check for package in local DB?
-       ;; TODO: check if package is already installed?
-       ;; TODO: build package name to download using local DB
-       ;;       url will be REMOTE/NAME-VERSION.tar.gz
-       ;; TODO: after download, unpackage and use install-local to complete installation
-       ;; TODO: after install, add an entry to the local DB
-    ))
+     (let* ((package-name (cadr args))
+            (package-info (local-db:get package-name)))
+       (cond
+         ((not package-info)
+          ;; TODO: how to handle this case?
+          (display "Package not found!"))
+         (else
+           (let* ((fname (symbol->string
+                           (cdr
+                            (assoc 'file package-info))))
+                  (tmp-file (string-append *tmp-dir* "/" fname)))
+             (download
+               (string-append *remote-repo-url* fname)
+               tmp-file)
+             (run-sys-cmd "cd " *tmp-dir* "; tar xfz " tmp-file)
+             ;(write `(TODO install-local ,(filename->path tmp-file))))
+             (process-pkg "install-local" (string-append *tmp-dir* "/" package-name "/package.scm")))))))
+    ((equal? cmd "uninstall")
+     (let* ((package-name (cadr args))
+            (package-info (local-db:get package-name)))
+       (process-pkg 
+         "uninstall-local" 
+         (string-append 
+           *cyclops-db:dir*
+           "/" package-name "/package.scm")))
+     ;; TODO: look up package in local repo, call uninstall section from package.scm (probably via uninstall-local)
+     ;; TODO: probably do something similar for test
+     ;(write 'TODO)
+    )
     ((member cmd '("install-local" "uninstall-local" "test"))
       (let ((cmd (car args))
             (pkgfile (cadr args)))
