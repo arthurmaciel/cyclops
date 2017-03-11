@@ -2,7 +2,6 @@
 ; 
 ; - Upgrade is just like install but with a version check prior. And possibly an uninstall as well (prior to install???)
 ; - Need to fix up paths in packages and cyclops . For now will model everything after the cyclone makefile.
-; - Need to get a working uninstall directive in the sample lib
 ; - Will need to update cyclone to recognize (cyclone) libs as coming from the data directory
 ; - Need to move all of the cyclops globals to a confit file. Allow specifying config file location somehow as well, to better support sandboxes
 ; - Consider adding a define-c to get a temporary file name instead of using /tmp
@@ -128,7 +127,25 @@ Commands:
 ")
   (newline))
 
+;; local-db:get :: string -> Either alist boolean
+;; Get contents of the package file for an installed package, if found
+;; Returns false if the package is not installed
 (define (local-db:get name)
+  (let ((pkg-file (string-append *local-repo-dir* "/" name "/package.scm")))
+;(write `(DEBUG ,pkg-file))
+    (cond
+      ((not (file-exists? pkg-file))
+       #f)
+      (else 
+        (call-with-input-file
+          pkg-file
+          (lambda (fp)
+            (read-all fp)))))))
+
+;; remote-db:get :: string -> Either alist boolean
+;; Get information for a remote package, using the cached index.dat.
+;; Returns false if the package is not found
+(define (remote-db:get name)
   (let ((index-file (string-append *local-repo-dir* "/index.dat")))
     (cond
       ((not (file-exists? index-file))
@@ -166,9 +183,9 @@ Commands:
           ;; TODO: how to handle this case?
           (display "Package not found!"))
          (else
-          (display (cdr (assoc 'name package-info)))
+          (display package-name)
           (display "-")
-          (display (cdr (assoc 'ver package-info)))
+          (display (cadr (assoc 'ver package-info)))
           (newline)))))
 ;; TODO: following need to work with the package name rather than the
 ;; package file.
@@ -184,7 +201,7 @@ Commands:
     ((equal? cmd "install")
      ;; TODO: check if a sync is needed (IE, there is no local DB)
      (let* ((package-name (cadr args))
-            (package-info (local-db:get package-name)))
+            (package-info (remote-db:get package-name)))
        (cond
          ((not package-info)
           ;; TODO: how to handle this case?
@@ -208,6 +225,18 @@ Commands:
          (string-append 
            *local-repo-dir*
            "/" package-name "/package.scm")))
+    )
+    ((equal? cmd "upgrade")
+     ;; TODO: check local installed version vs version from index.dat
+     ;;       - if later version in index.dat, proceed with upgrade
+     ;;       - otherwise, quit with "no update available"
+     (let* ((package-name (cadr args))
+            (installed-package-info (local-db:get package-name))
+            (remote-package-info (remote-db:get package-name)))
+       (write `(local ,(assoc 'ver installed-package-info)
+                remote ,(assoc 'ver remote-package-info))))
+;; TODO: uninstall package (removes old version)
+;; TODO: install package
     )
     ((member cmd '("install-local" "uninstall-local" "test"))
       (let ((cmd (car args))
