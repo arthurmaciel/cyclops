@@ -1,6 +1,5 @@
 ;; Roadmap:
 ; 
-; - Need to include deps, maybe everything from package.scm in index.dat
 ; - Upgrade is just like install but with a version check prior. And possibly an uninstall as well (prior to install???)
 ; - Need to fix up paths in packages and cyclops . For now will model everything after the cyclone makefile.
 ; - Need to get a working uninstall directive in the sample lib
@@ -21,8 +20,7 @@
 
 ;; TODO: constants to later externalize
 (define *tmp-dir* "/tmp")
-(define *dest-dir* "/home/justin/Documents/cyclops") ;; TODO: temporarily use local for testing
-(define *lib-dir* "/usr/local/share/cyclone")
+(define *prefix-dir* "/home/justin/Documents/cyclops") ;; TODO: temporarily use local for testing
 (define *local-repo-dir* "./repo")
 (define *remote-repo-url* "https://raw.githubusercontent.com/cyclone-scheme/cyclone-packages/master/_packages/")
 
@@ -38,9 +36,15 @@
         (for-each
           (lambda (cmd)
             (run-sys-cmd 
-              (string-replace-all
-                (string-replace-all cmd "~DESTDIR~" *dest-dir*)
-                "~LIB~" *lib-dir*)))
+              (foldl 
+                (lambda (old-new acc) 
+                  (string-replace-all acc (car old-new) (cdr old-new))) 
+                  cmd
+                  `(("~BIN~" . ,(string-append *prefix-dir* "/bin"))
+                    ("~LIB~" . ,(string-append *prefix-dir* "/lib"))
+                    ("~INCLUDE~" . ,(string-append *prefix-dir* "/include/cyclone"))
+                    ("~DATA~" .    ,(string-append *prefix-dir* "/share/cyclone"))
+                   ))))
           (cdr directive))))))))
 
 ;; Read given file and determine if it is a library
