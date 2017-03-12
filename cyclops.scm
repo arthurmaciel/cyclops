@@ -3,6 +3,9 @@
 ; - Upgrade is just like install but with a version check prior. And possibly an uninstall as well (prior to install???)
 ; - Will need to update cyclone to recognize (cyclone) libs as coming from the data directory
 ; - Need to move all of the cyclops globals to a config file. Allow specifying config file location somehow as well, to better support sandboxes
+; - Along the lines of previous, need to setup a real Makefile and installation for this project. should model it after cyclone as much as possible
+;   will want to install the binary and a config file.
+;   not sure how binary will know where config file is installed. maybe can bake it into the executable as part of build process
 ; - Consider adding a define-c to get a temporary file name instead of using /tmp
 
 (import 
