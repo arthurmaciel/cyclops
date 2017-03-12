@@ -1,9 +1,8 @@
 ;; Roadmap:
 ; 
 ; - Upgrade is just like install but with a version check prior. And possibly an uninstall as well (prior to install???)
-; - Need to fix up paths in packages and cyclops . For now will model everything after the cyclone makefile.
 ; - Will need to update cyclone to recognize (cyclone) libs as coming from the data directory
-; - Need to move all of the cyclops globals to a confit file. Allow specifying config file location somehow as well, to better support sandboxes
+; - Need to move all of the cyclops globals to a config file. Allow specifying config file location somehow as well, to better support sandboxes
 ; - Consider adding a define-c to get a temporary file name instead of using /tmp
 
 (import 
