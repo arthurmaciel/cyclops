@@ -120,7 +120,7 @@
        cyclops query package
        cyclops sync
 
-cyclops is a simple package manager that supports the Cyclone Scheme compiler.
+cyclops is a simple package manager for the Cyclone Scheme compiler.
 
 Commands:
   install - Fetch, build, and install a package from the remote repository
