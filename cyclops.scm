@@ -1,11 +1,8 @@
 ;; Roadmap:
 ; 
 ; - Upgrade is just like install but with a version check prior. And possibly an uninstall as well (prior to install???)
-; - Will need to update cyclone to recognize (cyclone) libs as coming from the data directory
-; - Need to move all of the cyclops globals to a config file. Allow specifying config file location somehow as well, to better support sandboxes
-; - Along the lines of previous, need to setup a real Makefile and installation for this project. should model it after cyclone as much as possible
-;   will want to install the binary and a config file.
-;   not sure how binary will know where config file is installed. maybe can bake it into the executable as part of build process
+; - Along the lines of previous, need to setup Makefile to do a real installation for this project. should model it after cyclone as much as possible
+; - once that is done, give the config variables better defaults, no more /home/justin !!!
 ; - Consider adding a define-c to get a temporary file name instead of using /tmp
 
 (import 
@@ -13,17 +10,29 @@
   (scheme read)
   (scheme write)
   (scheme file)
+  (scheme process-context)
   (scheme cyclone util)
   (srfi 2)
   (download)
   (util)
 )
 
-;; TODO: constants to later externalize
-(define *tmp-dir* "/tmp")
-(define *prefix-dir* "/home/justin/Documents/cyclops") ;; TODO: temporarily use local for testing
-(define *local-repo-dir* "./repo")
-(define *remote-repo-url* "https://raw.githubusercontent.com/cyclone-scheme/cyclone-packages/master/_packages/")
+;; get-external-var :: string -> string -> string
+;; Read the value of a configurable variable
+(define (get-external-var key default)
+  (let ((key+value (assoc key (get-environment-variables))))
+    (if key+value (cdr key+value) default)))
+
+;; Configuration section:
+(define *tmp-dir* 
+  (get-external-var "CYCLOPS_TMP_PATH" "/tmp"))
+(define *prefix-dir* 
+  (get-external-var "CYCLOPS_PATH" "~/Documents/cyclops")) ;; TODO: temporarily use local for testing
+(define *local-repo-dir* 
+  (get-external-var "CYCLOPS_REPO_PATH" "./repo"))
+(define *remote-repo-url* 
+  (get-external-var "CYCLOPS_REMOTE_REPO_URL" "https://raw.githubusercontent.com/cyclone-scheme/cyclone-packages/master/_packages/"))
+;; END config vars
 
 ;; run-directive :: string -> alist -> symbol -> void
 ;; Lookup given key in the alist of package parameters, 
